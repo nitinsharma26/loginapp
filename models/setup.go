@@ -1,50 +1,24 @@
 package models
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"net/url"
 	"os"
 
-	"github.com/jinzhu/gorm"
-	// _ "github.com/jinzhu/gorm/dialects/mysql"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var DB *gorm.DB
+var MongoDB *mongo.Database
 
 func ConnectDataBase() {
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
-	err := godotenv.Load(".env")
-
+	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		fmt.Println("Mongo.connect() ERROR: ", err)
+		os.Exit(1)
 	}
 
-	Dbdriver := os.Getenv("DB_DRIVER")
-	DbHost := os.Getenv("DB_HOST")
-	DbUser := os.Getenv("DB_USER")
-	DbPassword := os.Getenv("DB_PASSWORD")
-	DbName := os.Getenv("DB_NAME")
-	DbPort := os.Getenv("DB_PORT")
-
-	dsn := url.URL{
-		User:     url.UserPassword(DbUser, DbPassword),
-		Scheme:   "postgres",
-		Host:     fmt.Sprintf("%s:%s", DbHost, DbPort),
-		Path:     DbName,
-		RawQuery: (&url.Values{"sslmode": []string{"disable"}}).Encode(),
-	}
-	DB, err = gorm.Open("postgres", dsn.String())
-
-	if err != nil {
-		fmt.Println("Cannot connect to database ", Dbdriver)
-		log.Fatal("connection error:", err)
-	} else {
-		fmt.Println("We are connected to the database ", Dbdriver)
-	}
-
-	DB.AutoMigrate(&User{})
-
+	MongoDB = client.Database("First_Database")
 }

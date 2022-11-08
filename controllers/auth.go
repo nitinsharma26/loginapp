@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CurrentUser(c *gin.Context) {
@@ -75,6 +76,8 @@ func Register(c *gin.Context) {
 
 	u.Username = input.Username
 	u.Password = input.Password
+	u.ID = primitive.NewObjectID()
+	u.User_ID = u.ID.Hex()
 
 	_, err := u.SaveUser()
 

@@ -2,21 +2,18 @@ package main
 
 import (
 	"loginapp/controllers"
-	"loginapp/models"
-
 	"loginapp/middlewares"
+	"loginapp/models"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-
 	models.ConnectDataBase()
 
 	r := gin.Default()
 
 	public := r.Group("/api")
-
 	public.POST("/register", controllers.Register)
 	public.POST("/login", controllers.Login)
 

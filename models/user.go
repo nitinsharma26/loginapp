@@ -1,25 +1,30 @@
 package models
 
 import (
+	"context"
 	"errors"
 	"fmt"
-
 	"loginapp/utils/token"
 
-	"github.com/jinzhu/gorm"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type User struct {
-	gorm.Model
-	Username string `gorm:"size:255;not null;unique" json:"username"`
-	Password string `gorm:"size:255;not null;" json:"password"`
+	ID       primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Username string             `json:"username,omitempty" bson:"username,omitempty"`
+	Password string             `json:"password,omitempty" bson:"password,omitempty"`
+	User_ID  string             `json:"user_id" bson:"user_id,omitempty"`
 }
 
-func GetUserByID(uid uint) (User, error) {
+func GetUserByID(uid string) (User, error) {
 
 	var u User
 
-	if err := DB.First(&u, uid).Error; err != nil {
+	collection := MongoDB.Collection("Users")
+	ctx := context.TODO()
+
+	err := collection.FindOne(ctx, User{User_ID: uid}).Decode(&u)
+	if err != nil {
 		return u, errors.New("User not found!")
 	}
 
@@ -42,8 +47,9 @@ func LoginCheck(username string, password string) (string, error) {
 	var err error
 
 	u := User{}
-
-	err = DB.Model(User{}).Where("username = ?", username).Take(&u).Error
+	ctx := context.TODO()
+	collection := MongoDB.Collection("Users")
+	err = collection.FindOne(ctx, User{Username: username}).Decode(&u)
 
 	if err != nil {
 		return "", err
@@ -55,7 +61,7 @@ func LoginCheck(username string, password string) (string, error) {
 		return "", fmt.Errorf("WrongPassword")
 	}
 
-	token, err := token.GenerateToken(u.ID)
+	token, err := token.GenerateToken(u.User_ID)
 
 	if err != nil {
 		return "", err
@@ -68,9 +74,8 @@ func LoginCheck(username string, password string) (string, error) {
 func (u *User) SaveUser() (*User, error) {
 
 	var err error
-	err = DB.Create(&u).Error
-	if err != nil {
-		return &User{}, err
-	}
-	return u, nil
+	collection := MongoDB.Collection("Users")
+	ctx := context.TODO()
+	collection.InsertOne(ctx, u)
+	return u, err
 }
